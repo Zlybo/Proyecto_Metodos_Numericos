@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Capitulo 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-gray-800 text-white">
+    <!-- Barra de navegación -->
+    <nav class="bg-indigo-700 flex shadow-lg items-center p-4">
+        <h1 class="text-2xl font-bold ml-[200px]">Métodos Numéricos</h1>
+        <div class="">
+            <a href="#" class="bg-indigo-800 ml-5 p-3 rounded-lg text-sm font-medium">Capítulo 1: Raíces</a>
+            <a href="#" class="hover:bg-indigo-600 p-3 rounded-lg text-sm font-medium">Capítulo 2: Sistemas Lineales</a>
+            <a href="#" class="hover:bg-indigo-600 p-3 rounded-lg text-sm font-medium">Capítulo 3: Interpolación</a>
+        </div>
+    </nav>
+
+    <div class="mx-[250px]">
+        <!-- Descripción -->
+        <div class="my-8">
+            <h2 class="text-3xl font-bold mb-2">Capítulo 1: Métodos de Búsqueda de Raíces</h2>
+            <p>Encuentra raíces de ecuaciones no lineales utilizando diferentes métodos numéricos.</p>
+        </div>
+        <!-- Panel de selección de método -->
+        <div class="bg-white rounded-lg p-6 mb-6 text-gray-800">
+            <h3 class="text-xl font-semibold mb-4">Selección de Método</h3>
+
+            <div class="grid grid-cols-3">
+                <!-- Métodos con radio buttons -->
+                <div>
+                    <div class="flex items-center mb-3">
+                        <input id="bisection" type="radio" name="method" class="h-4 w-4 text-indigo-600" checked>
+                        <label for="bisection" class="ml-2 font-medium">Bisección</label>
+                        <button class="ml-2 text-indigo-600 hover:text-indigo-800" title="Información sobre Bisección">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center mb-3">
+                        <input id="falsePosition" type="radio" name="method" class="h-4 w-4 text-indigo-600">
+                        <label for="falsePosition" class="ml-2 font-medium">Regla Falsa</label>
+                        <button class="ml-2 text-indigo-600 hover:text-indigo-800"
+                            title="Información sobre Regla Falsa">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center mb-3">
+                        <input id="newton" type="radio" name="method" class="h-4 w-4 text-indigo-600">
+                        <label for="newton" class="ml-2 font-medium">Newton</label>
+                        <button class="ml-2 text-indigo-600 hover:text-indigo-800" title="Información sobre Newton">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center mb-3">
+                        <input id="secant" type="radio" name="method" class="h-4 w-4 text-indigo-600">
+                        <label for="secant" class="ml-2 font-medium">Secante</label>
+                        <button class="ml-2 text-indigo-600 hover:text-indigo-800" title="Información sobre Secante">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center mb-3">
+                        <input id="fixedPoint" type="radio" name="method" class="h-4 w-4 text-indigo-600">
+                        <label for="fixedPoint" class="ml-2 font-medium">Punto Fijo</label>
+                        <button class="ml-2 text-indigo-600 hover:text-indigo-800" title="Información sobre Punto Fijo">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center mb-3">
+                        <input id="multipleRoots" type="radio" name="method" class="h-4 w-4 text-indigo-600">
+                        <label for="multipleRoots" class="ml-2 font-medium">Raíces Múltiples</label>
+                        <button class="ml-2 text-indigo-600 hover:text-indigo-800"
+                            title="Información sobre Raíces Múltiples">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Datos de entrada -->
+        <div class="bg-white rounded-lg p-6 mb-6 text-gray-800">
+            <h3 class="text-xl font-semibold mb-4">Datos de Entrada</h3>
+
+            <div class="mb-4">
+                <label for="function" class="block font-medium mb-2">Función f(x)</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
+                        f(x) =
+                    </div>
+                    <input type="text" id="function"
+                        class="pl-12 block w-full rounded-md border-gray-300 border shadow-sm p-2.5"
+                        placeholder="x^2 - 4">
+                    <button
+                        class="absolute inset-y-0 right-0 px-3 flex items-center bg-gray-100 rounded-r-md hover:bg-gray-200 border-l border-gray-300">
+                        <i class="fas fa-calculator"></i>
+                    </button>
+                </div>
+                <p class="mt-1 text-sm text-gray-500">Ejemplo: x^2 - 4, sin(x) + x^2, exp(x)/x + 3, etc.</p>
+            </div>
+
+            <!-- Campos para métodos de intervalo (Bisección, Regla Falsa) -->
+            <div id="intervaloMetodos" class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="a" class="block font-medium mb-2">Límite inferior (a)</label>
+                    <input type="number" id="a" class="block w-full rounded-md border-gray-300 border shadow-sm p-2.5"
+                        step="any" value="-2">
+                </div>
+                <div>
+                    <label for="b" class="block font-medium mb-2">Límite superior (b)</label>
+                    <input type="number" id="b" class="block w-full rounded-md border-gray-300 border shadow-sm p-2.5"
+                        step="any" value="-0.1">
+                </div>
+            </div>
+
+            <!-- Campos para método de Newton, Secante, Raíces múltiples -->
+            <div id="initialGuessMethod" class="hidden mb-4">
+                <div>
+                    <label for="x0" class="block font-medium mb-2">Valor inicial (x₀)</label>
+                    <input type="number" id="x0" class="block w-full rounded-md border-gray-300 border shadow-sm p-2.5"
+                        step="any" value="1">
+                </div>
+            </div>
+
+            <!-- Campo adicional para Secante -->
+            <div id="x1Container" class="hidden mb-4">
+                <div>
+                    <label for="x1" class="block font-medium mb-2">Segundo valor inicial (x₁)</label>
+                    <input type="number" id="x1" class="block w-full rounded-md border-gray-300 border shadow-sm p-2.5"
+                        step="any" value="2">
+                </div>
+            </div>
+
+            <!-- Campo para Punto Fijo -->
+            <div id="fixedPointMethod" class="hidden mb-4">
+                <label for="gFunction" class="block font-medium mb-2">Función g(x) para punto fijo</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
+                        g(x) =
+                    </div>
+                    <input type="text" id="gFunction"
+                        class="pl-12 block w-full rounded-md border-gray-300 border shadow-sm p-2.5"
+                        placeholder="x/2 + 2/x">
+                </div>
+                <p class="mt-1 text-sm text-gray-500">Ejemplo: Para f(x) = x² - 4, una posible g(x) sería (x² + 4)/8.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                    <label for="tolerancia" class="block font-medium mb-2">Tolerancia</label>
+                    <input type="number" id="tolerancia"
+                        class="block w-full rounded-md border-gray-300 border shadow-sm p-2.5" step="any" value="0.005"
+                        min="0">
+                </div>
+                <div>
+                    <label for="maxIteraciones" class="block font-medium mb-2">Iteraciones máximas</label>
+                    <input type="number" id="maxIteraciones"
+                        class="block w-full rounded-md border-gray-300 border shadow-sm p-2.5" value="100" min="1">
+                </div>
+            </div>
+
+            <div class="flex gap-4 mt-6">
+                <button id="calcularBtn"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-md transition-colors duration-200 flex items-center">
+                    <i class="fas fa-calculator mr-2"></i>Calcular
+                </button>
+                <button id="reporteBtn"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-6 rounded-md transition-colors duration-200 flex items-center">
+                    <i class="fas fa-file-alt mr-2"></i>Generar Informe
+                </button>
+                <button id="limpiarBtn"
+                    class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-6 rounded-md transition-colors duration-200 flex items-center">
+                    <i class="fas fa-eraser mr-2"></i>Limpiar
+                </button>
+            </div>
+        </div>
+
+        <!-- Resultados - inicialmente oculto -->
+        <div id="resultadosContainer" class="hidden bg-white rounded-lg p-6 mb-6 text-gray-800">
+            <h3 class="text-xl font-semibold mb-4">Resultados</h3>
+
+            <div class="grid grid-cols-2 gap-6">
+                <!-- Detalles de la solución -->
+                <div>
+                    <h4 class="text-lg font-medium mb-3">Información de la Solución</h4>
+
+                    <div class="bg-gray-50 p-4 rounded-md">
+                        <div class="mb-2">
+                            <span class="font-semibold text-gray-600">Método:</span>
+                            <span id="resultadoMetodo" class="ml-2">Bisección</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="font-semibold text-gray-600">Raíz encontrada:</span>
+                            <span id="resultadoRaiz" class="ml-2">-0.2596</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="font-semibold text-gray-600">Valor de la función:</span>
+                            <span id="resultadoFuncion" class="ml-2">0.0000</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="font-semibold text-gray-600">Iteraciones:</span>
+                            <span id="resultadoIteraciones" class="ml-2">9</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="font-semibold text-gray-600">Tolerancia alcanzada:</span>
+                            <span id="resultadoTolerancia" class="ml-2">0.0037</span>
+                        </div>
+                        <div>
+                            <span class="font-semibold text-gray-600">Estado:</span>
+                            <span id="resultadoEstado"
+                                class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Convergencia
+                                exitosa</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfico -->
+                <div>
+                    <h4 class="text-lg font-medium mb-3">Gráfico de la Función</h4>
+                    <div id="graficoFuncion" class="w-full h-64 bg-gray-100 rounded-md"></div>
+                </div>
+            </div>
+
+            <!-- Tabla de iteraciones -->
+            <div class="mt-8">
+                <h4 class="text-lg font-medium mb-3">Tabla de Iteraciones</h4>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white border">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th
+                                    class="border px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Iter
+                                </th>
+                                <th
+                                    class="border px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    a
+                                </th>
+                                <th
+                                    class="border px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    b
+                                </th>
+                                <th
+                                    class="border px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    x_m
+                                </th>
+                                <th
+                                    class="border px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    f(x_m)
+                                </th>
+                                <th
+                                    class="border px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Error
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaIteraciones">
+                            <!-- Se llenará dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informe Comparativo - inicialmente oculto -->
+        <div id="reporteContainer" class="hidden bg-white rounded-lg p-6 mb-6 text-gray-800">
+            <h3 class="text-xl font-semibold mb-4">Informe Comparativo</h3>
+
+            <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-check-circle text-green-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-green-800">
+                            <span class="font-semibold">Mejor método:</span>
+                            <span id="mejorMetodo" class="ml-2">Newton</span> (convergió en <span
+                                id="mejorMetodoIteraciones">5</span> iteraciones).
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla comparativa de métodos -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <h4 class="text-lg font-medium mb-3">Comparación de Métodos</h4>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th
+                                        class="border px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Método
+                                    </th>
+                                    <th
+                                        class="border px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Raíz
+                                    </th>
+                                    <th
+                                        class="border px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Iteraciones
+                                    </th>
+                                    <th
+                                        class="border px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Estado
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaComparativa">
+                                <!-- Se llenará dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Gráfico de convergencia -->
+                <div>
+                    <h4 class="text-lg font-medium mb-3">Velocidad de Convergencia</h4>
+                    <div id="graficoConvergencia" class="w-full h-80 bg-gray-100 rounded-md"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Referencias a los elementos de radio button
+            const bisection = document.getElementById('bisection');
+            const falsePosition = document.getElementById('falsePosition');
+            const newton = document.getElementById('newton');
+            const secant = document.getElementById('secant');
+            const fixedPoint = document.getElementById('fixedPoint');
+            const multipleRoots = document.getElementById('multipleRoots');
+
+            // Referencias a los contenedores de campos
+            const intervaloMetodos = document.getElementById('intervaloMetodos');
+            const initialGuessMethod = document.getElementById('initialGuessMethod');
+            const x1Container = document.getElementById('x1Container');
+            const fixedPointMethod = document.getElementById('fixedPointMethod');
+
+            // Función para actualizar los campos visibles según el método seleccionado
+            function actualizarCampos() {
+                // Ocultar todos los contenedores primero
+                intervaloMetodos.classList.add('hidden');
+                initialGuessMethod.classList.add('hidden');
+                x1Container.classList.add('hidden');
+                fixedPointMethod.classList.add('hidden');
+
+                // Mostrar los campos según el método seleccionado
+                if (bisection.checked || falsePosition.checked) {
+                    intervaloMetodos.classList.remove('hidden');
+                } else if (newton.checked || multipleRoots.checked) {
+                    initialGuessMethod.classList.remove('hidden');
+                } else if (secant.checked) {
+                    initialGuessMethod.classList.remove('hidden');
+                    x1Container.classList.remove('hidden');
+                } else if (fixedPoint.checked) {
+                    initialGuessMethod.classList.remove('hidden');
+                    fixedPointMethod.classList.remove('hidden');
+                }
+            }
+
+            // Asignar el evento change a cada radio button
+            bisection.addEventListener('change', actualizarCampos);
+            falsePosition.addEventListener('change', actualizarCampos);
+            newton.addEventListener('change', actualizarCampos);
+            secant.addEventListener('change', actualizarCampos);
+            fixedPoint.addEventListener('change', actualizarCampos);
+            multipleRoots.addEventListener('change', actualizarCampos);
+
+            // Configurar los campos inicialmente
+            actualizarCampos();
+
+            // Función para obtener el token CSRF
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            // Obtener el token CSRF
+            const csrftoken = getCookie('csrftoken');
+
+            // Manejar el botón calcular
+            document.getElementById('calcularBtn').addEventListener('click', function () {
+                // Obtener el método seleccionado
+                let metodoNombre = '';
+                if (bisection.checked) metodoNombre = 'bisection';
+                else if (falsePosition.checked) metodoNombre = 'falsePosition';
+                else if (newton.checked) metodoNombre = 'newton';
+                else if (secant.checked) metodoNombre = 'secant';
+                else if (fixedPoint.checked) metodoNombre = 'fixedPoint';
+                else if (multipleRoots.checked) metodoNombre = 'multipleRoots';
+
+                // Por ahora, solo implementamos bisección y regla falsa
+                if (metodoNombre !== 'bisection' && metodoNombre !== 'falsePosition') {
+                    alert('Este método aún no está implementado.');
+                    return;
+                }
+
+                // Obtener los valores de los campos
+                const funcion = document.getElementById('function').value;
+                const a = document.getElementById('a').value;
+                const b = document.getElementById('b').value;
+                const tolerancia = document.getElementById('tolerancia').value;
+                const maxIteraciones = document.getElementById('maxIteraciones').value;
+
+                // Validar que todos los campos estén completos
+                if (!funcion || !a || !b || !tolerancia || !maxIteraciones) {
+                    alert('Por favor, complete todos los campos.');
+                    return;
+                }
+
+                // Preparar los datos para enviar
+                const datos = {
+                    metodo: metodoNombre,
+                    funcion: funcion,
+                    a: a,
+                    b: b,
+                    tolerancia: tolerancia,
+                    maxIteraciones: maxIteraciones
+                };
+
+                // Hacer la petición AJAX
+                fetch('/api/ejecutar-metodo/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify(datos)
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                throw new Error(data.error || 'Error en la petición');
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(resultado => {
+                        mostrarResultados(resultado);
+                    })
+                    .catch(error => {
+                        alert('Error: ' + error.message);
+                    });
+            });
+
+            // Manejar el botón de informe
+            document.getElementById('reporteBtn').addEventListener('click', function () {
+                // Obtener los valores de los campos
+                const funcion = document.getElementById('function').value;
+                const a = document.getElementById('a').value;
+                const b = document.getElementById('b').value;
+                const tolerancia = document.getElementById('tolerancia').value;
+                const maxIteraciones = document.getElementById('maxIteraciones').value;
+
+                // Validar que todos los campos estén completos
+                if (!funcion || !a || !b || !tolerancia || !maxIteraciones) {
+                    alert('Por favor, complete todos los campos.');
+                    return;
+                }
+
+                // Preparar los datos para enviar
+                const datos = {
+                    funcion: funcion,
+                    a: a,
+                    b: b,
+                    tolerancia: tolerancia,
+                    maxIteraciones: maxIteraciones
+                };
+
+                // Hacer la petición AJAX
+                fetch('/api/generar-informe/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify(datos)
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                throw new Error(data.error || 'Error en la petición');
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(informe => {
+                        mostrarInforme(informe);
+                    })
+                    .catch(error => {
+                        alert('Error: ' + error.message);
+                    });
+            });
+
+            // Función para mostrar los resultados
+            function mostrarResultados(resultado) {
+                // Mostrar el contenedor de resultados
+                document.getElementById('resultadosContainer').classList.remove('hidden');
+                document.getElementById('reporteContainer').classList.add('hidden');
+
+                // Actualizar la información de la solución
+                document.getElementById('resultadoMetodo').textContent = resultado.metodo_nombre;
+                document.getElementById('resultadoRaiz').textContent = resultado.raiz.toFixed(6);
+                document.getElementById('resultadoFuncion').textContent = resultado.f_raiz.toExponential(4);
+                document.getElementById('resultadoIteraciones').textContent = resultado.iteraciones;
+                document.getElementById('resultadoTolerancia').textContent = resultado.tolerancia_alcanzada.toFixed(6);
+
+                // Estado de convergencia
+                const estadoElement = document.getElementById('resultadoEstado');
+                if (resultado.convergio) {
+                    estadoElement.textContent = 'Convergencia exitosa';
+                    estadoElement.className = 'ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800';
+                } else {
+                    estadoElement.textContent = 'No convergió';
+                    estadoElement.className = 'ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800';
+                }
+
+                // Llenar la tabla de iteraciones
+                const tablaBody = document.getElementById('tablaIteraciones');
+                tablaBody.innerHTML = ''; // Limpiar tabla primero
+
+                resultado.tabla.forEach(fila => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                    <td class="border px-6 py-3 text-sm text-gray-500">${fila.iteracion}</td>
+                    <td class="border px-6 py-3 text-sm text-gray-500">${fila.a.toFixed(6)}</td>
+                    <td class="border px-6 py-3 text-sm text-gray-500">${fila.b.toFixed(6)}</td>
+                    <td class="border px-6 py-3 text-sm text-gray-500">${fila.x_m.toFixed(6)}</td>
+                    <td class="border px-6 py-3 text-sm text-gray-500">${fila.f_xm.toExponential(4)}</td>
+                    <td class="border px-6 py-3 text-sm text-gray-500">${fila.error.toFixed(6)}</td>
+                `;
+                    tablaBody.appendChild(tr);
+                });
+
+                // Crear el gráfico
+                const graficoData = [{
+                    x: resultado.grafico.x,
+                    y: resultado.grafico.y,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'f(x)'
+                }, {
+                    x: [resultado.raiz],
+                    y: [0],
+                    type: 'scatter',
+                    mode: 'markers',
+                    marker: {
+                        size: 10,
+                        color: 'red'
+                    },
+                    name: 'Raíz'
+                }];
+
+                const layout = {
+                    margin: { t: 10, b: 30, l: 40, r: 10 },
+                    xaxis: { title: 'x' },
+                    yaxis: { title: 'f(x)' },
+                    showlegend: false,
+                    plot_bgcolor: "#f8fafc",
+                    paper_bgcolor: "#f8fafc"
+                };
+
+                Plotly.newPlot('graficoFuncion', graficoData, layout);
+            }
+
+            // Función para mostrar el informe comparativo
+            function mostrarInforme(informe) {
+                // Mostrar el contenedor del informe
+                document.getElementById('resultadosContainer').classList.add('hidden');
+                document.getElementById('reporteContainer').classList.remove('hidden');
+
+                // Actualizar el mejor método
+                document.getElementById('mejorMetodo').textContent = informe.mejor_metodo;
+                document.getElementById('mejorMetodoIteraciones').textContent = informe.mejor_metodo_iteraciones;
+
+                // Llenar la tabla comparativa
+                const tablaComparativa = document.getElementById('tablaComparativa');
+                tablaComparativa.innerHTML = ''; // Limpiar tabla primero
+
+                for (const [metodo, datos] of Object.entries(informe.metodos)) {
+                    const tr = document.createElement('tr');
+
+                    // Determinar la clase para el estado
+                    let estadoClase = datos.convergio
+                        ? 'px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800'
+                        : 'px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800';
+
+                    let estadoTexto = datos.convergio ? 'Convergió' : 'No convergió';
+
+                    tr.innerHTML = `
+                    <td class="border px-6 py-3 text-sm font-medium text-gray-900">${metodo}</td>
+                    <td class="border px-6 py-3 text-sm text-gray-500">${datos.raiz.toFixed(6)}</td>
+                    <td class="border px-6 py-3 text-sm text-gray-500">${datos.iteraciones}</td>
+                    <td class="border px-6 py-3 text-sm text-gray-500">
+                        <span class="${estadoClase}">${estadoTexto}</span>
+                    </td>
+                `;
+                    tablaComparativa.appendChild(tr);
+                }
+
+                // Crear el gráfico de convergencia
+                const iteraciones = Math.max(
+                    informe.grafico_convergencia['Bisección'].length,
+                    informe.grafico_convergencia['Regla Falsa'].length
+                );
+
+                const xValues = Array.from({ length: iteraciones }, (_, i) => i + 1);
+
+                const graficoData = [
+                    {
+                        x: xValues.slice(0, informe.grafico_convergencia['Bisección'].length),
+                        y: informe.grafico_convergencia['Bisección'],
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        name: 'Bisección',
+                        line: { color: 'blue' }
+                    },
+                    {
+                        x: xValues.slice(0, informe.grafico_convergencia['Regla Falsa'].length),
+                        y: informe.grafico_convergencia['Regla Falsa'],
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        name: 'Regla Falsa',
+                        line: { color: 'red' }
+                    }
+                ];
+
+                const layout = {
+                    title: 'Comparación de Convergencia',
+                    xaxis: { title: 'Iteración' },
+                    yaxis: {
+                        title: 'Error',
+                        type: 'log'  // Escala logarítmica para mejor visualización
+                    },
+                    legend: {
+                        x: 0,
+                        y: 1,
+                        bgcolor: 'rgba(255, 255, 255, 0.5)'
+                    },
+                    plot_bgcolor: "#f8fafc",
+                    paper_bgcolor: "#f8fafc"
+                };
+
+                Plotly.newPlot('graficoConvergencia', graficoData, layout);
+            }
+
+            // Manejar el botón limpiar
+            document.getElementById('limpiarBtn').addEventListener('click', function () {
+                document.getElementById('resultadosContainer').classList.add('hidden');
+                document.getElementById('reporteContainer').classList.add('hidden');
+            });
+        });
+    </script>
+</body>
+
+</html>

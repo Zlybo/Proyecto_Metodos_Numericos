@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Capitulo 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- MathLive (JS y CSS) -->
+    <script src="https://unpkg.com/mathlive"></script>
+</head>
+
+<body class="bg-gray-800 text-white">
+    <!-- Barra de navegación -->
+    <nav class="bg-indigo-700 flex shadow-lg items-center p-4">
+        <h1 class="text-2xl font-bold ml-[200px]">Métodos Numéricos</h1>
+        <div class="">
+            <a href="#" class="bg-indigo-800 ml-5 p-3 rounded-lg text-sm font-medium">Capítulo 1: Raíces</a>
+            <a href="#" class="hover:bg-indigo-600 p-3 rounded-lg text-sm font-medium">Capítulo 2: Sistemas Lineales</a>
+            <a href="#" class="hover:bg-indigo-600 p-3 rounded-lg text-sm font-medium">Capítulo 3: Interpolación</a>
+        </div>
+    </nav>
+
+    <div class="mx-[250px]">
+        <!-- Descripción -->
+        <div class="my-8">
+            <h2 class="text-3xl font-bold mb-2">Capítulo 1: Métodos de Búsqueda de Raíces</h2>
+            <p>Encuentra raíces de ecuaciones no lineales utilizando diferentes métodos numéricos.</p>
+        </div>
+        <!-- Panel de selección de método -->
+        <div class="bg-white rounded-lg p-6 mb-6 text-gray-800">
+            <h3 class="text-xl font-semibold mb-4">Selección de Método</h3>
+
+            <div class="grid grid-cols-3" id="contenedor-metodos">
+                {% for metodo in metodos %}
+                <div class="flex items-center mb-3">
+                    <input id="{{ metodo.id }}" type="radio" name="method" class="h-4 w-4" {% if forloop.first%}checked{% endif %}>
+                    <label for="{{ metodo.id }}" class="ml-2 font-medium">{{ metodo.nombre }}</label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Datos de entrada -->
+        <div class="bg-white rounded-lg p-6 mb-6 text-gray-800">
+            <h3 class="text-xl font-semibold mb-4">Datos de Entrada</h3>
+            <!-- Funcion -->
+            <div class="mb-4">
+                <label for="funcion_math_field" class="font-medium mb-2">Función f(x)</label>
+                <!-- Campo de entrada -->
+                <math-field id="funcion_math_field" class="border border-blue-700 rounded w-full"></math-field>
+            </div>
+            <div class="flex">
+                <label>Ejemplo:</label>
+                <math-field readonly>x=\frac{-b\pm \sqrt{b^2-4ac}}{2a}</math-field>
+                <p class="font-semibold">IMPORTANTE: Las variables debe estar en forma de "x", no se permite ni "y" ni "z" ni otro caracter</p>
+            </div>
+
+
+            <!-- Tolerancia y iteraciones maximas -->
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="tolerancia" class="font-medium">Tolerancia</label>
+                    <input type="number" id="tolerancia" class="w-full rounded-lg border border-blue-700 p-2.5"
+                        step="any" value="0.005" min="0">
+                    <h3>Deben ser valores menores o iguales a 0, es decir: 0, 0.1, 0.002, 0.99</h3>
+                </div>
+                <div>
+                    <label for="iteraciones_maximas" class="font-medium">Iteraciones máximas</label>
+                    <input type="number" id="iteraciones_maximas" class="w-full rounded-lg border border-blue-700 p-2.5"
+                        step="1" value="100" min="1">
+                </div>
+            </div>
+
+
+            <!-- Intervalo (Biseccion, Regla Falsa) -->
+            <div id="menu_intervalos" class="grid grid-cols-2 gap-4 mb-4 hidden">
+                <div>
+                    <label for="limite_inferior" class="font-medium">Límite inferior (a)</label>
+                    <input type="number" id="limite_inferior" class="w-full rounded-lg border border-blue-700 p-2.5"
+                        step="any" value="-2">
+                </div>
+                <div>
+                    <label for="limite_superior" class="font-medium">Límite superior (b)</label>
+                    <input type="number" id="limite_superior" class="w-full rounded-lg border border-blue-700 p-2.5"
+                        step="any" value="-0.1">
+                </div>
+            </div>
+
+            <!-- valor inicial y funcion g (Punto fijo) -->
+            <div id="menu_punto_fijo" class="grid grid-cols-2 gap-4 mb-4 hidden">
+                <div>
+                    <label for="valor_inicial" class="font-medium">Valor inicial (x0)</label>
+                    <input type="number" id="valor_inicial" class="w-full rounded-lg border border-blue-700 p-2.5"
+                        step="any" value="1">
+                </div>
+                <div>
+                    <label for="funcion_g_math_field" class="font-medium">Transformacion x=g(x)</label>
+                    <!-- Campo de entrada -->
+                    <math-field id="funcion_g_math_field" class="border border-blue-700 rounded w-full"></math-field>
+                    <math-field readonly>f(x)=x^3-2x+5, g(x) = x = \frac{x^3+5}{2} </math-field>
+                </div>
+            </div>
+
+            <!-- SOLO valor inicial (Newton y Secante) -->
+            <div id="menu_valor_inicial" class="hidden">
+                <div>
+                    <label for="valor_inicial" class="font-medium">Valor inicial (x0)</label>
+                    <input type="number" id="valor_inicial" class="w-full rounded-lg border border-blue-700 p-2.5"
+                        step="any" value="1">
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex gap-4 mt-6 text-white font-medium">
+                <button id="boton_calcular"
+                    class="bg-indigo-600 hover:bg-indigo-700 py-2 px-6 rounded-lg transition-colors duration-200">
+                    Calcular
+                </button>
+                <button id="boton_reporte"
+                    class="bg-emerald-600 hover:bg-emerald-700 py-2 px-6 rounded-lg transition-colors duration-200">
+                    Generar Informe
+                </button>
+                <button id="boton_limpiar"
+                    class="bg-gray-600 hover:bg-gray-700 py-2 px-6 rounded-lg transition-colors duration-200">
+                    Limpiar
+                </button>
+            </div>
+
+            <div id="resultadoDerivada" class="mt-4 text-lg text-black"></div>
+
+        </div>
+
+    </div>
+
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Metodos
+            const biseccion = document.getElementById('biseccion')
+            const regla_falsa = document.getElementById('regla_falsa');
+            const punto_fijo = document.getElementById('punto_fijo');
+            const newton = document.getElementById('newton')
+            const secante = document.getElementById('secante');
+            const raices_multiples = document.getElementById('raices_multiples');
+
+            // Menus
+            const menu_intervalos = document.getElementById('menu_intervalos');
+            const menu_punto_fijo = document.getElementById('menu_punto_fijo');
+            const menu_valor_inicial = document.getElementById('menu_valor_inicial');
+
+            // MATH-FIELDS, math_field.value devuelve el math-field a texto normal (x^2 - 4)
+            const funcion_math_field = document.getElementById('funcion_math_field');
+            const funcion_g_math_field = document.getElementById('funcion_g_math_field');
+
+            // Botones
+            const boton = document.getElementById('boton_calcular');
+
+            // Resultados
+            const resultadoDiv = document.getElementById('resultadoDerivada');
+
+            boton.addEventListener('click', () => {
+                const funcion = funcion_math_field.value;
+
+                fetch('/api/derivar/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({ funcion })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    resultadoDiv.textContent = `f'(x) = ${data.derivada}`;
+                })
+                .catch(err => {
+                    resultadoDiv.textContent = `Error: ${err}`;
+                });
+            });
+
+            function actualizarMenus() {
+                // Oculta todo
+                menu_intervalos.classList.add('hidden');
+                menu_punto_fijo.classList.add('hidden')
+                menu_valor_inicial.classList.add('hidden')
+
+                // Muestra según el método
+                if (biseccion.checked || regla_falsa.checked) {
+                    menu_intervalos.classList.remove('hidden');
+                }
+
+                if (punto_fijo.checked){
+                    menu_punto_fijo.classList.remove('hidden')
+                }
+
+                if (newton.checked || secante.checked){
+                    menu_valor_inicial.classList.remove('hidden')
+                }
+            }
+
+            // Detectar cambios
+            biseccion.addEventListener('change', actualizarMenus);
+            regla_falsa.addEventListener('change', actualizarMenus);
+            punto_fijo.addEventListener('change', actualizarMenus);
+            newton.addEventListener('change', actualizarMenus)
+            secante.addEventListener('change', actualizarMenus);
+            raices_multiples.addEventListener('change', actualizarMenus)
+
+            // Activar al cargar
+            actualizarMenus();
+        });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Capitulo 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    </style>
+</head>
+<body class="bg-gray-800 text-white">
+    <!-- Barra de navegación -->
+    <nav class="bg-indigo-700 flex shadow-lg items-center p-4">
+        <h1 class="text-2xl font-bold ml-[200px]">Métodos Numéricos</h1>
+        <div class="">
+            <a href="#" class="bg-indigo-800 ml-5 p-3 rounded-lg text-sm font-medium">Capítulo 1: Raíces</a>
+            <a href="#" class="hover:bg-indigo-600 p-3 rounded-lg text-sm font-medium">Capítulo 2: Sistemas Lineales</a>
+            <a href="#" class="hover:bg-indigo-600 p-3 rounded-lg text-sm font-medium">Capítulo 3: Interpolación</a>
+        </div>
+    </nav>
+    
+    <div class="mx-[250px]">
+        <!-- Descripción -->
+        <div class="my-8">
+            <h2 class="text-3xl font-bold mb-2">Capítulo 1: Métodos de Búsqueda de Raíces</h2>
+            <p>Encuentra raíces de ecuaciones no lineales utilizando diferentes métodos numéricos.</p>
+        </div>
+        <!-- Panel de selección de método -->
+        <div class="bg-white rounded-lg p-6 mb-6 text-gray-800">
+            <h3 class="text-xl font-semibold mb-4">Selección de Método</h3>
+            
+            <div class="grid grid-cols-3">
+                <!-- Métodos con radio buttons -->
+                <div>
+                    <div class="flex items-center mb-3">
+                        <input id="bisection" type="radio" name="method" class="h-4 w-4 text-indigo-600" checked>
+                        <label for="bisection" class="ml-2  font-medium">Bisección</label>
+                        <button class="ml-2 text-indigo-600 hover:text-indigo-800" title="Información sobre Bisección">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center mb-3">
+                        <input id="falsePosition" type="radio" name="method" class="h-4 w-4 text-indigo-600">
+                        <label for="falsePosition" class="ml-2  font-medium">Regla Falsa</label>
+                        <button class="ml-2 text-indigo-600 hover:text-indigo-800" title="Información sobre Regla Falsa">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="flex items-center mb-3">
+                        <input id="newton" type="radio" name="method" class="h-4 w-4 text-indigo-600">
+                        <label for="newton" class="ml-2 text-gray-700 font-medium">Newton</label>
+                        <button class="ml-2 text-indigo-600 hover:text-indigo-800" title="Información sobre Newton">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center mb-3">
+                        <input id="secant" type="radio" name="method" class="h-4 w-4 text-indigo-600">
+                        <label for="secant" class="ml-2 text-gray-700 font-medium">Secante</label>
+                        <button class="ml-2 text-indigo-600 hover:text-indigo-800" title="Información sobre Secante">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="flex items-center mb-3">
+                        <input id="fixedPoint" type="radio" name="method" class="h-4 w-4 text-indigo-600">
+                        <label for="fixedPoint" class="ml-2 text-gray-700 font-medium">Punto Fijo</label>
+                        <button class="ml-2 text-indigo-600 hover:text-indigo-800" title="Información sobre Punto Fijo">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center mb-3">
+                        <input id="multipleRoots" type="radio" name="method" class="h-4 w-4 text-indigo-600">
+                        <label for="multipleRoots" class="ml-2 text-gray-700 font-medium">Raíces Múltiples</label>
+                        <button class="ml-2 text-indigo-600 hover:text-indigo-800" title="Información sobre Raíces Múltiples">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+</body>
+</html>

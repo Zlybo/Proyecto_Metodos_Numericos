@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Capitulo 3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/mathlive"></script>
+</head>
+
+<body class="bg-gray-800 text-white">
+
+    <!-- Barra de navegación -->
+    <nav class="bg-indigo-700 flex shadow-lg items-center p-4">
+        <h1 class="text-2xl font-bold ml-[200px]">Métodos Numéricos</h1>
+        <div class="">
+            <a href="../capitulo_1" class="hover:bg-indigo-600 ml-5 p-3 rounded-lg text-sm font-medium">Capítulo 1: Raíces</a>
+            <a href="../capitulo_2" class="hover:bg-indigo-600 p-3 rounded-lg text-sm font-medium">Capítulo 2: Sistemas Lineales</a>
+            <a href="#" class="bg-indigo-800 p-3 rounded-lg text-sm font-medium">Capítulo 3: Interpolación</a>
+        </div>
+    </nav>
+
+    <div class="mx-[250px]">
+
+        <!-- Descripción -->
+        <div class="my-8">
+            <h2 class="text-3xl font-bold mb-2">Capítulo 3: Métodos de Interpolación</h2>
+            <p>Encuentra raíces de ecuaciones no lineales usando diferentes métodos numéricos.</p>
+        </div>
+
+        <!-- Panel de selección de método -->
+        <div class="bg-white rounded-lg p-6 mb-6 text-gray-800">
+            <h3 class="text-xl font-semibold mb-4">Selección de Método</h3>
+
+            <div class="grid grid-cols-3" id="contenedor-metodos">
+                {% for metodo in metodos %}
+                <div class="flex items-center mb-3">
+                    <input id="{{ metodo.id }}" type="radio" name="method" class="h-4 w-4" {% if forloop.first%}checked{% endif %}>
+                    <label for="{{ metodo.id }}" class="ml-2 font-medium">{{ metodo.nombre }}</label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Consideraciones -->
+        <div id="consideraciones" class="bg-white rounded-lg p-6 mb-6 text-gray-800">
+            <h3 class="font-bold">Consideraciones:</h3>
+            <p id="texto_consideraciones" class="font-semibold"></p>
+        </div>
+
+        <!-- Datos de entrada -->
+        <div class="bg-white rounded-lg p-6 mb-6 text-gray-800">
+
+            <h3 class="text-xl font-semibold mb-4">Datos de Entrada</h3>
+            <div class="mb-4">
+                <label for="funcion_math_field" class="font-medium mb-2">Función f(x)</label>
+                <math-field id="funcion_math_field" class="border border-blue-700 rounded w-full"></math-field>
+            </div>
+            <div class="flex">
+                <label>Ejemplo:</label>
+                <math-field readonly>f(x) = x^3 - x - 2, raiz = 1.52</math-field>
+                <p class="font-semibold">IMPORTANTE: Las variables debe estar en forma de "x", no se permite ni "y" ni
+                    "z" ni otro caracter</p>
+            </div>
+
+            
+            <!-- Botones -->
+            <div class="flex gap-4 mt-6 text-white font-medium">
+                <button id="boton_calcular"
+                    class="bg-indigo-600 hover:bg-indigo-700 py-2 px-6 rounded-lg transition-colors duration-200">
+                    Calcular
+                </button>
+                <button id="boton_informe"
+                    class="bg-emerald-600 hover:bg-emerald-700 py-2 px-6 rounded-lg transition-colors duration-200">
+                    Informe
+                </button>
+                <button id="boton_limpiar"
+                    class="bg-gray-600 hover:bg-gray-700 py-2 px-6 rounded-lg transition-colors duration-200">
+                    Limpiar
+                </button>
+            </div>
+
+        </div>
+        
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Metodos
+
+            // Consideraciones
+            const consideracionesPorMetodo = {
+                vandermonde: 'El método de bisección solo converge si la raíz está dentro del intervalo [a, b] y f(a)*f(b) < 0.',
+                newton_interpolante: 'La regla falsa también requiere f(a)*f(b) < 0 y puede converger más rápido que bisección, pero no siempre divide el intervalo a la mitad.',
+                lagrange: 'La función g(x) debe cumplir con condiciones de convergencia. No cualquier g(x) funciona.',
+                spline_lineal: 'Newton-Raphson requiere que f(x) sea derivable. El valor inicial debe estar cerca de la raíz.',
+                spline_cubico: 'La secante no requiere derivadas, pero necesita dos valores iniciales. Puede fallar si f(x) no es suave.',
+            };
+
+            // Funciones:
+            const get_data = async (url, body) => {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(body)
+                });
+                return res.json();
+            };
+
+            const get_grafica = async (body) => {
+                const res = await fetch('/grafica/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams(body)
+                });
+                return res.blob();
+            };
+
+            const get_Tabla = (data, columnas) => {
+                let html = `<table class="w-full mt-6 border border-blue-700"> 
+                    <thead class="text-left border border-blue-700">
+                        <tr>${columnas.map(columna => `<th>${columna.label}</th>`).join('')}</tr>
+                    </thead>
+                    <tbody>`;
+
+                data.tabla.forEach(fila_tabla => {
+                    html += `<tr>${columnas.map(columna => {
+                        const val = fila_tabla[columna.key];
+                        return `<td>${typeof val === 'number' ? val.toFixed(6) : val}</td>`;
+                    }).join('')}</tr>`;
+                });
+
+                html += '</tbody></table>';
+                return html;
+            };
+
+            //  Respuestas de Botones
+            document.getElementById('boton_limpiar').addEventListener('click', () => {
+                tablaDiv.classList.add('hidden');
+                grafica.classList.add('hidden');
+                menu_informe.classList.add('hidden');
+            });
+
+            document.getElementById('boton_informe').addEventListener('click', () => {
+                menu_informe.classList.remove('hidden');
+            });
+
+            document.getElementById('boton_calcular').addEventListener('click', async () => {
+                tablaDiv.classList.remove('hidden')
+                grafica.classList.remove('hidden')
+
+                const metodo = document.querySelector('input[name="method"]:checked').id;
+
+                const funcion = document.getElementById('funcion_math_field').value;
+                const tolerancia = document.getElementById('tolerancia').value;
+                const max_iter = document.getElementById('iteraciones_maximas').value;
+            });
+
+            function actualizarMenus() {
+                // Oculta todo
+                menu_intervalos.classList.add('hidden');
+                menu_punto_fijo.classList.add('hidden');
+                menu_newton_raices.classList.add('hidden');
+                menu_secante.classList.add('hidden');
+
+                // Muestra según el método
+                if (biseccion.checked || regla_falsa.checked) {
+                    menu_intervalos.classList.remove('hidden');
+                }
+
+                if (punto_fijo.checked) {
+                    menu_punto_fijo.classList.remove('hidden')
+                }
+
+                if (newton.checked || raices_multiples.checked) {
+                    menu_newton_raices.classList.remove('hidden')
+                }
+                if (secante.checked) {
+                    menu_secante.classList.remove('hidden')
+                }
+            }
+
+            // Funcion que cambia las consideraciones
+            const div_consideraciones = document.getElementById('consideraciones');
+            const texto_consideraciones = document.getElementById('texto_consideraciones');
+
+            function actualizarConsideraciones() {
+                const metodoSeleccionado = document.querySelector('input[name="method"]:checked').id;
+                const texto = consideracionesPorMetodo[metodoSeleccionado];
+
+                texto_consideraciones.textContent = texto;
+            }
+
+            // Detectar cambios
+            const metodos = [biseccion, regla_falsa, punto_fijo, newton, secante, raices_multiples];
+
+            metodos.forEach(metodo => {
+                metodo.addEventListener('change', () => {
+                    actualizarMenus();
+                    actualizarConsideraciones();
+                })
+            })
+
+            // Activar al cargar
+            actualizarMenus();
+            actualizarConsideraciones();
+
+        });
+    </script>
+
+</body>
+
+</html>

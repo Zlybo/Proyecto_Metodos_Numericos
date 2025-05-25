@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Capitulo 2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/mathlive"></script>
+</head>
+
+<body class="bg-gray-800 text-white">
+
+    <!-- Barra de navegación -->
+    <nav class="bg-indigo-700 flex shadow-lg items-center p-4">
+        <h1 class="text-2xl font-bold ml-[200px]">Métodos Numéricos</h1>
+        <div class="">
+            <a href="../capitulo_1" class="hover:bg-indigo-600 ml-5 p-3 rounded-lg text-sm font-medium">Capítulo 1:
+                Raíces</a>
+            <a href="#" class="bg-indigo-800 p-3 rounded-lg text-sm font-medium">Capítulo 2: Sistemas Lineales</a>
+            <a href="../capitulo_3" class="hover:bg-indigo-600 p-3 rounded-lg text-sm font-medium">Capítulo 3:
+                Interpolación</a>
+        </div>
+    </nav>
+
+    <div class="mx-[250px]">
+
+        <!-- Descripción -->
+        <div class="my-8">
+            <h2 class="text-3xl font-bold mb-2">Capítulo 1: Métodos de Búsqueda de Raíces</h2>
+            <p>Encuentra raíces de ecuaciones no lineales usando diferentes métodos numéricos.</p>
+        </div>
+
+        <!-- Panel de selección de método -->
+        <div class="bg-white rounded-lg p-6 mb-6 text-gray-800">
+            <h3 class="text-xl font-semibold mb-4">Selección de Método</h3>
+
+            <div class="grid grid-cols-3" id="contenedor-metodos">
+                {% for metodo in metodos %}
+                <div class="flex items-center mb-3">
+                    <input id="{{ metodo.id }}" type="radio" name="method" class="h-4 w-4" {% if forloop.first%}checked{% endif %}>
+                    <label for="{{ metodo.id }}" class="ml-2 font-medium">{{ metodo.nombre }}</label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Consideraciones -->
+        <div id="consideraciones" class="bg-white rounded-lg p-6 mb-6 text-gray-800">
+            <h3 class="font-bold">Consideraciones:</h3>
+            <p id="texto_consideraciones" class="font-semibold"></p>
+        </div>
+
+        <!-- Datos de entrada -->
+        <div class="bg-white rounded-lg p-6 mb-6 text-gray-800">
+
+            <h3 class="text-xl font-semibold mb-4">Datos de Entrada</h3>
+            <h3 class="text-xl font-semibold mb-4">Forma: Ax = b</h3>
+            <div class="flex flex-1">
+                <div class="mb-4">
+                    <label for="matriz_A" class="font-medium mb-2">Matriz A</label>
+                    <math-field id="matriz_A" class="border border-blue-700 rounded w-[350px] h-[150px]"></math-field>
+                </div>
+
+                <div class="ml-6 mb-4">
+                    <label for="vector_B" class="font-medium mb-2">Vector B</label>
+                    <math-field id="vector_B" class="border border-blue-700 rounded w-[150px] h-[150px]"></math-field>
+                </div>
+
+                <div class="ml-6 mb-4">
+                    <label for="vector_B" class="font-medium mb-2">x_0 (opcional)</label>
+                    <math-field id="vector_B" class="border border-blue-700 rounded w-[150px] h-[150px]"></math-field>
+                </div>
+            </div>
+
+            <!-- Tolerancia y iteraciones maximas -->
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="tolerancia" class="font-medium">Tolerancia</label>
+                    <input type="number" id="tolerancia" class="w-full rounded-lg border border-blue-700 p-2.5"
+                        step="any" value="0.005" min="0">
+                    <h3>Deben ser valores menores o iguales a 0, es decir: 0, 0.1, 0.002, 0.99</h3>
+                </div>
+                <div>
+                    <label for="iteraciones_maximas" class="font-medium">Iteraciones máximas</label>
+                    <input type="number" id="iteraciones_maximas" class="w-full rounded-lg border border-blue-700 p-2.5"
+                        step="1" value="100" min="1">
+                </div>
+            </div>
+
+
+            <!-- Botones -->
+            <div class="flex gap-4 mt-6 text-white font-medium">
+                <button id="boton_calcular"
+                    class="bg-indigo-600 hover:bg-indigo-700 py-2 px-6 rounded-lg transition-colors duration-200">
+                    Calcular
+                </button>
+                <button id="boton_informe"
+                    class="bg-emerald-600 hover:bg-emerald-700 py-2 px-6 rounded-lg transition-colors duration-200">
+                    Informe
+                </button>
+                <button id="boton_limpiar"
+                    class="bg-gray-600 hover:bg-gray-700 py-2 px-6 rounded-lg transition-colors duration-200">
+                    Limpiar
+                </button>
+            </div>
+
+            <div id="tablaResultados"></div>
+
+        </div>
+
+    </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const get_tabla = (tabla) => {
+                if (!tabla.length) return '<p>No hay datos para mostrar</p>';
+
+                // Número dinámico de x
+                const cantidadX = tabla[0].x_n.length;
+
+                // Generar etiquetas dinámicas: x1, x2, ..., xN
+                const etiquetasX = [];
+                for (let i = 1; i <= cantidadX; i++) {
+                    etiquetasX.push(`x${i}`);
+                }
+
+                // Encabezado con iter, las etiquetas dinámicas, y error
+                let html = `<table class="w-full border border-blue-700"> 
+                            <thead class="text-left border border-blue-700">
+                                <tr>
+                                <th>Iter</th>`;
+
+                etiquetasX.forEach(etiqueta => {
+                    html += `<th>${etiqueta}</th>`;
+                });
+
+                html += `<th>Error</th>
+                        </tr>
+                        </thead>
+                        <tbody>`;
+
+                // Cuerpo
+                tabla.forEach(fila => {
+                    html += `<tr><td>${fila.iter.toFixed(6)}</td>`;
+
+                    fila.x_n.forEach(x => {
+                        html += `<td>${x[0].toFixed(6)}</td>`;
+                    });
+
+                    html += `<td>${fila.error.toFixed(6)}</td>`;
+                    html += `</tr>`;
+                });
+                html += '</tbody></table>';
+
+                return html;
+            };
+
+            const tablaDiv = document.getElementById('tablaResultados');
+
+            // Consideraciones
+            const consideracionesPorMetodo = {
+                jacobi: 'El método de bisección solo converge si la raíz está dentro del intervalo [a, b] y f(a)*f(b) < 0.',
+                gauss_seidel: 'La regla falsa también requiere f(a)*f(b) < 0 y puede converger más rápido que bisección, pero no siempre divide el intervalo a la mitad.',
+                sor: 'La función g(x) debe cumplir con condiciones de convergencia. No cualquier g(x) funciona.',
+            };
+
+            // Funciones:
+            const get_data = async (url, body) => {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(body)
+                });
+                return res.json();
+            };
+
+            //  Respuestas de Botones
+            document.getElementById('boton_limpiar').addEventListener('click', () => {
+                tablaDiv.classList.add('hidden');
+                grafica.classList.add('hidden');
+                menu_informe.classList.add('hidden');
+            });
+
+            document.getElementById('boton_calcular').addEventListener('click', async () => {
+                tablaDiv.classList.remove('hidden');
+
+                const matriz_A = document.getElementById('matriz_A').value;
+                const vector_B = document.getElementById('vector_B').value;
+                const tolerancia = document.getElementById('tolerancia').value;
+                const max_iter = document.getElementById('iteraciones_maximas').value;
+
+                const metodo = document.querySelector('input[name="method"]:checked').id;
+                if (metodo === 'jacobi'){
+                    tablaDiv.innerHTML = `<h3 class="font-bold text-lg mt-6">Metodo Jacobi</h3>`;
+                    const data = await get_data('/api/metodos_capitulo_2/', { metodo, matriz_A, vector_B, tolerancia, max_iter });
+                    tablaDiv.innerHTML += `<h3 class="font-semibold text-sm mt-6">Radio Espectral: ${data.radio}</h3>`;
+                    tablaDiv.innerHTML += get_tabla(data.tabla);     
+                }
+                else if (metodo === 'gauss_seidel'){
+                    tablaDiv.innerHTML = `<h3 class="font-bold text-lg mt-6">Metodo Gauss-Seidel</h3>`;
+                    const data = await get_data('/api/metodos_capitulo_2/', { metodo, matriz_A, vector_B, tolerancia, max_iter });
+                    tablaDiv.innerHTML += `<h3 class="font-semibold text-sm mt-6">Radio Espectral: ${data.radio}</h3>`;
+                    tablaDiv.innerHTML += get_tabla(data.tabla);     
+                }
+                else if (metodo === 'sor'){
+                    tablaDiv.innerHTML = `<h3 class="font-bold text-lg mt-6">Metodo SOR</h3>`;
+                    const data = await get_data('/api/metodos_capitulo_2/', { metodo, matriz_A, vector_B, tolerancia, max_iter });
+                    tablaDiv.innerHTML += `<h3 class="font-semibold text-sm mt-6">Radio Espectral: ${data.radio}</h3>`;
+                    tablaDiv.innerHTML += get_tabla(data.tabla);     
+                }
+
+            });
+
+
+            function actualizarMenus() {
+                // Oculta todo
+                menu_intervalos.classList.add('hidden');
+                menu_punto_fijo.classList.add('hidden');
+                menu_newton_raices.classList.add('hidden');
+                menu_secante.classList.add('hidden');
+
+                // Muestra según el método
+                if (biseccion.checked || regla_falsa.checked) {
+                    menu_intervalos.classList.remove('hidden');
+                }
+
+                if (punto_fijo.checked) {
+                    menu_punto_fijo.classList.remove('hidden')
+                }
+
+                if (newton.checked || raices_multiples.checked) {
+                    menu_newton_raices.classList.remove('hidden')
+                }
+                if (secante.checked) {
+                    menu_secante.classList.remove('hidden')
+                }
+            }
+
+            // Funcion que cambia las consideraciones
+            const div_consideraciones = document.getElementById('consideraciones');
+            const texto_consideraciones = document.getElementById('texto_consideraciones');
+
+            function actualizarConsideraciones() {
+                const metodoSeleccionado = document.querySelector('input[name="method"]:checked').id;
+                const texto = consideracionesPorMetodo[metodoSeleccionado];
+
+                texto_consideraciones.textContent = texto;
+            }
+
+            // Detectar cambios
+            const metodos = [biseccion, regla_falsa, punto_fijo, newton, secante, raices_multiples];
+
+            metodos.forEach(metodo => {
+                metodo.addEventListener('change', () => {
+                    actualizarMenus();
+                    actualizarConsideraciones();
+                })
+            })
+
+            // Activar al cargar
+            actualizarMenus();
+            actualizarConsideraciones();
+
+        });
+    </script>
+
+</body>
+
+</html>

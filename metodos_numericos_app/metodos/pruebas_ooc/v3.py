@@ -1,7 +1,6 @@
-from sympy import sympify, lambdify
-from latex2sympy2 import latex2sympy
-import numpy as np
 import sympy as sp
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 def polinomio_vandermonde(data):
@@ -75,49 +74,42 @@ def newton_interpolante(x_str, y_str):
     return str(polinomio), str(polinomio_expandido).replace("**", "^")
 
 
-def lagrange(x_str, y_str):
-    x_vals = np.array(x_str.split(','), dtype=float)
-    y_vals = np.array(y_str.split(','), dtype=float)
+def graficar_polinomio(polinomio_str, x_vals, y_vals, titulo=""):
+    x_vals = np.array(x_vals.split(','), dtype=float)
+    y_vals = np.array(y_vals.split(','), dtype=float)
 
     x = sp.Symbol('x')
-    n = len(x_vals)
-    polinomio = 0
+    # Convertir el string a expresión simbólica
+    polinomio_expr = sp.sympify(polinomio_str)
 
-    for i in range(n):
-        # Construir el término de Lagrange L_i(x)
-        L_i = 1
-        for j in range(n):
-            if i != j:
-                L_i *= (x - x_vals[j]) / (x_vals[i] - x_vals[j])
+    # Crear una función evaluable con lambdify
+    f = sp.lambdify(x, polinomio_expr, modules=["numpy"])
 
-        polinomio += y_vals[i] * L_i
+    # Crear puntos para la curva del polinomio
+    x_min, x_max = min(x_vals), max(x_vals)
+    x_plot = np.linspace(x_min - 1, x_max + 1, 400)
+    y_plot = f(x_plot)
 
-    polinomio_expandido = sp.expand(polinomio)
-    return str(polinomio), str(polinomio_expandido).replace("**", "^")
+    # Graficar la curva
+    plt.plot(x_plot, y_plot, label="Polinomio interpolante")
+    plt.scatter(x_vals, y_vals, color='red', zorder=5, label="Puntos originales")
+    plt.title(titulo)
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.grid(True)
+    plt.legend()
+    plt.show()
 
 
-def spline_lineal(x_str, y_str):
-    x_vals = np.array(x_str.split(','), dtype=float)
-    y_vals = np.array(y_str.split(','), dtype=float)
+x_str = "1.5, 8.5, 22, 35"
+y_str = "0, 9, 28, 26"
 
-    n = len(x_vals)
-    tramos = []
+polinomio_vander = vandermonde(x_str, y_str)
+print(polinomio_vander)
+polinomio, expandido = newton_interpolante(x_str, y_str)
+print('Newton:', polinomio)
+print('Expandido', expandido)
 
-    for i in range(n - 1):
-        x0, x1 = x_vals[i], x_vals[i + 1]
-        y0, y1 = y_vals[i], y_vals[i + 1]
+graficar_polinomio(polinomio_vander, x_str, y_str)
 
-        # Pendiente (m) y ordenada (b)
-        m = (y1 - y0) / (x1 - x0)
-        b = y0 - m * x0
-
-        tramos.append((x0, x1, m, b))  # Guardamos el intervalo y la ecuación
-
-    # Imprimir polinomios
-    polinomios = []
-    for i, (x0, x1, m, b) in enumerate(tramos):
-        polinomios_str = f"Polinomio tramo {i + 1} para x en [{x0}, {x1}]:"
-        polinomios_str += f"  S_{i}(x) = {m}x + {b}"
-        polinomios.append(polinomios_str)
-
-    return tramos, polinomios
+graficar_polinomio(expandido, x_str, y_str)

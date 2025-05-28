@@ -51,17 +51,20 @@
         <div class="bg-white rounded-lg p-6 mb-6 text-gray-800">
 
             <h3 class="text-xl font-semibold mb-4">Datos de Entrada</h3>
-            <div class="mb-4">
-                <label for="funcion_math_field" class="font-medium mb-2">Función f(x)</label>
-                <math-field id="funcion_math_field" class="border border-blue-700 rounded w-full"></math-field>
-            </div>
-            <div class="flex">
-                <label>Ejemplo:</label>
-                <math-field readonly>f(x) = x^3 - x - 2, raiz = 1.52</math-field>
-                <p class="font-semibold">IMPORTANTE: Las variables debe estar en forma de "x", no se permite ni "y" ni
-                    "z" ni otro caracter</p>
-            </div>
+            <h3 class="text-lg font-semibold mb-4">Formato: [x1,y1], [x2,y2], [x3,y3] -> x1, x2, x3. y1, y2, y3 </h3>
 
+            <div>
+                <label for="punto_x" class="font-medium">Punto X</label>
+                <input type="text" id="punto_x"
+                    class="w-full rounded-lg border border-blue-700 p-2.5" value="1.5, 8.5, 22, 35">
+                <h3>Valor de la "x" del punto, seguido de las demas "x" de los demas puntos</h3>
+            </div>
+            <div>
+                <label for="punto_y" class="font-medium">Punto Y</label>
+                <input type="text" id="punto_y"
+                    class="w-full rounded-lg border border-blue-700 p-2.5" value="0, 9, 28, 26">
+                <h3>Valor de la "y" del punto, seguido de las demas "y" de los demas puntos</h3>
+            </div>
             
             <!-- Botones -->
             <div class="flex gap-4 mt-6 text-white font-medium">
@@ -79,6 +82,11 @@
                 </button>
             </div>
 
+            <div id="tablaResultados"></div>
+
+            <img class="hidden" id="grafica" alt="Gráfico generado" />
+
+
         </div>
         
 
@@ -87,14 +95,23 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Metodos
+            const vandermonde = document.getElementById('vandermonde');
+            const newton_interpolante = document.getElementById('newton_interpolante');
+            const lagrange = document.getElementById('lagrange');
+            const spline_lineal = document.getElementById('spline_lineal');
+            const spline_cubico = document.getElementById('spline_cubico');
+
+            const tablaDiv = document.getElementById('tablaResultados');
+            const grafica = document.getElementById('grafica');
+
 
             // Consideraciones
             const consideracionesPorMetodo = {
-                vandermonde: 'El método de bisección solo converge si la raíz está dentro del intervalo [a, b] y f(a)*f(b) < 0.',
-                newton_interpolante: 'La regla falsa también requiere f(a)*f(b) < 0 y puede converger más rápido que bisección, pero no siempre divide el intervalo a la mitad.',
-                lagrange: 'La función g(x) debe cumplir con condiciones de convergencia. No cualquier g(x) funciona.',
-                spline_lineal: 'Newton-Raphson requiere que f(x) sea derivable. El valor inicial debe estar cerca de la raíz.',
-                spline_cubico: 'La secante no requiere derivadas, pero necesita dos valores iniciales. Puede fallar si f(x) no es suave.',
+                vandermonde: 'El método de Vandermonde construye un sistema lineal con una matriz que puede ser mal condicionada para muchos puntos. No es eficiente para grandes cantidades de datos, pero es directo y fácil de implementar.',
+                newton_interpolante: 'El método de interpolación de Newton usa diferencias divididas y permite añadir nuevos puntos sin recalcular todo el polinomio. Es más estable que Vandermonde en general.',
+                lagrange: 'El método de Lagrange no requiere resolver sistemas de ecuaciones, pero puede ser costoso computacionalmente. No es práctico para añadir nuevos puntos sin recalcular desde cero.',
+                spline_lineal: 'El spline lineal interpola con segmentos rectos entre cada par de puntos. Es simple, rápido y evita oscilaciones, pero no es suave en las derivadas.',
+                spline_cubico: 'El spline cúbico genera una función suave con continuidad en la primera y segunda derivada. Es ideal para mantener suavidad, pero requiere resolver un sistema tridiagonal.'
             };
 
             // Funciones:
@@ -108,7 +125,7 @@
             };
 
             const get_grafica = async (body) => {
-                const res = await fetch('/grafica/', {
+                const res = await fetch('/api/grafica_capitulo_3/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
@@ -118,29 +135,11 @@
                 return res.blob();
             };
 
-            const get_Tabla = (data, columnas) => {
-                let html = `<table class="w-full mt-6 border border-blue-700"> 
-                    <thead class="text-left border border-blue-700">
-                        <tr>${columnas.map(columna => `<th>${columna.label}</th>`).join('')}</tr>
-                    </thead>
-                    <tbody>`;
-
-                data.tabla.forEach(fila_tabla => {
-                    html += `<tr>${columnas.map(columna => {
-                        const val = fila_tabla[columna.key];
-                        return `<td>${typeof val === 'number' ? val.toFixed(6) : val}</td>`;
-                    }).join('')}</tr>`;
-                });
-
-                html += '</tbody></table>';
-                return html;
-            };
-
             //  Respuestas de Botones
             document.getElementById('boton_limpiar').addEventListener('click', () => {
                 tablaDiv.classList.add('hidden');
                 grafica.classList.add('hidden');
-                menu_informe.classList.add('hidden');
+                //menu_informe.classList.add('hidden');
             });
 
             document.getElementById('boton_informe').addEventListener('click', () => {
@@ -153,9 +152,57 @@
 
                 const metodo = document.querySelector('input[name="method"]:checked').id;
 
-                const funcion = document.getElementById('funcion_math_field').value;
-                const tolerancia = document.getElementById('tolerancia').value;
-                const max_iter = document.getElementById('iteraciones_maximas').value;
+                const punto_x = document.getElementById('punto_x').value;
+                const punto_y = document.getElementById('punto_y').value;
+
+                if (metodo === 'vandermonde'){
+                    tablaDiv.innerHTML = `<h3 class="font-bold text-lg mt-6">Metodo De Vandermonde</h3>`;
+                    const data = await get_data('/api/metodos_capitulo_3/', { metodo, punto_x, punto_y });   
+                    tablaDiv.innerHTML += `<math-field readonly>p(x) = ${data.polinomio} </math-field>`;
+
+                    // ----------------- Graficamos -------------------------
+                    const polinomio = data.polinomio;
+                    const blob = await get_grafica({ metodo, polinomio, punto_x, punto_y })
+                    const url = URL.createObjectURL(blob);
+                    grafica.src = url
+                }
+                else if (metodo === 'newton_interpolante'){
+                    tablaDiv.innerHTML = `<h3 class="font-bold text-lg mt-6">Metodo De Newton Interpolante</h3>`;
+                    const data = await get_data('/api/metodos_capitulo_3/', { metodo, punto_x, punto_y });   
+                    tablaDiv.innerHTML += `<math-field readonly>p(x) = ${data.polinomio} </math-field>`;
+                    tablaDiv.innerHTML += `<math-field readonly>p(x) = ${data.expandido} </math-field>`;
+
+                    // ----------------- Graficamos -------------------------
+                    const polinomio = data.expandido;
+                    const blob = await get_grafica({ metodo, polinomio, punto_x, punto_y })
+                    const url = URL.createObjectURL(blob);
+                    grafica.src = url
+                }
+                else if (metodo === 'lagrange'){
+                    tablaDiv.innerHTML = `<h3 class="font-bold text-lg mt-6">Metodo De Lagrange</h3>`;
+                    const data = await get_data('/api/metodos_capitulo_3/', { metodo, punto_x, punto_y });   
+                    tablaDiv.innerHTML += `<math-field readonly>p(x) = ${data.polinomio} </math-field>`;
+                    tablaDiv.innerHTML += `<math-field readonly>p(x) = ${data.expandido} </math-field>`;
+
+                    // ----------------- Graficamos -------------------------
+                    const polinomio = data.expandido;
+                    const blob = await get_grafica({ metodo, polinomio, punto_x, punto_y })
+                    const url = URL.createObjectURL(blob);
+                    grafica.src = url
+                }
+                else if (metodo === 'spline_lineal'){
+                    tablaDiv.innerHTML = `<h3 class="font-bold text-lg mt-6">Metodo De Spline Lineal</h3>`;
+                    const data = await get_data('/api/metodos_capitulo_3/', { metodo, punto_x, punto_y });   
+                    const polinomios = data.polinomios
+                    tablaDiv.innerHTML += `${polinomios.map(poli => `<h3 class="font-semibold text-sm mt-6">${poli}</h3>`).join('')}`;
+                    
+                    // ----------------- Graficamos -------------------------
+                    const tramos = data.tramos;
+                    const blob = await get_grafica({ metodo, tramos, punto_x })
+                    const url = URL.createObjectURL(blob);
+                    grafica.src = url
+                }
+                
             });
 
             function actualizarMenus() {
@@ -194,17 +241,17 @@
             }
 
             // Detectar cambios
-            const metodos = [biseccion, regla_falsa, punto_fijo, newton, secante, raices_multiples];
+            const metodos = [vandermonde, newton_interpolante, lagrange, spline_lineal, spline_cubico];
 
             metodos.forEach(metodo => {
                 metodo.addEventListener('change', () => {
-                    actualizarMenus();
+                    //actualizarMenus();
                     actualizarConsideraciones();
                 })
             })
 
             // Activar al cargar
-            actualizarMenus();
+            //actualizarMenus();
             actualizarConsideraciones();
 
         });

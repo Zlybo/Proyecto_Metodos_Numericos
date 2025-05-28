@@ -2,12 +2,10 @@ from latex2sympy2 import latex2sympy
 import numpy as np
 
 
-def jacobi(matriz_str, vector_str, tolerancia, max_iter):
-    matriz = latex2sympy(matriz_str)
-    A = np.array(matriz, dtype=float)
-
-    vector = latex2sympy(vector_str)
-    b = np.array(vector, dtype=float)
+def jacobi(matriz_str, vector_str, x_0_str, tolerancia, max_iter):
+    A = np.array(latex2sympy(matriz_str), dtype=float)
+    b = np.array(latex2sympy(vector_str), dtype=float)
+    x_0 = np.array(latex2sympy(x_0_str), dtype=float)
 
     # Diagonal, Diagonal Estrica Inferior y Diagonal Estricta Superior
     D = np.diag(np.diag(A))
@@ -31,9 +29,6 @@ def jacobi(matriz_str, vector_str, tolerancia, max_iter):
         print("El método Jacobi NO CONVERGERÁ.")
         return [], radio_espectral
 
-    x_0 = np.zeros_like(b)  # x_0, vector de zeros del tamaño de b
-    #x_0 = np.array([2, 2, 2, 2])
-
     tabla = []
     error = 100
     iteracion = 0
@@ -53,12 +48,10 @@ def jacobi(matriz_str, vector_str, tolerancia, max_iter):
     return tabla, radio_espectral
 
 
-def gauss_seidel(matriz_str, vector_str, tolerancia, max_iter):
-    matriz = latex2sympy(matriz_str)
-    A = np.array(matriz, dtype=float)
-
-    vector = latex2sympy(vector_str)
-    b = np.array(vector, dtype=float)
+def gauss_seidel(matriz_str, vector_str, x_0_str, tolerancia, max_iter):
+    A = np.array(latex2sympy(matriz_str), dtype=float)
+    b = np.array(latex2sympy(vector_str), dtype=float)
+    x_0 = np.array(latex2sympy(x_0_str), dtype=float)
 
     # Diagonal, Diagonal Estrica Inferior y Diagonal Estricta Superior
     D = np.diag(np.diag(A))
@@ -81,9 +74,6 @@ def gauss_seidel(matriz_str, vector_str, tolerancia, max_iter):
         print("El método Gauss-Seidel NO CONVERGERÁ.")
         return [], radio_espectral
 
-    x_0 = np.zeros_like(b)  # x_0, vector de zeros del tamaño de b
-    #x_0 = np.array([1, 1, 1])
-
     tabla = []
     error = 100
     iteracion = 0
@@ -103,19 +93,15 @@ def gauss_seidel(matriz_str, vector_str, tolerancia, max_iter):
     return tabla, radio_espectral
 
 
-def sor(matriz_str, vector_str, tolerancia, max_iter):
-    matriz = latex2sympy(matriz_str)
-    A = np.array(matriz, dtype=float)
-
-    vector = latex2sympy(vector_str)
-    b = np.array(vector, dtype=float)
+def sor(matriz_str, vector_str, x_0_str, omega, tolerancia, max_iter):
+    A = np.array(latex2sympy(matriz_str), dtype=float)
+    b = np.array(latex2sympy(vector_str), dtype=float)
+    x_0 = np.array(latex2sympy(x_0_str), dtype=float)
 
     # Diagonal, Diagonal Estrica Inferior y Diagonal Estricta Superior
     D = np.diag(np.diag(A))
     L = np.tril(A, k=-1)
     U = np.triu(A, k=1)
-
-    omega = 0.8  # 0 < w < 2
 
     # Matriz de Transicion y Vector Constante
     DL_inv = np.linalg.inv(D + omega * L)
@@ -126,14 +112,12 @@ def sor(matriz_str, vector_str, tolerancia, max_iter):
     eigvals = np.linalg.eigvals(T)
     radio_espectral = max(abs(eigvals))
 
+    print("Radio espectral ρ(T):", radio_espectral)
     if radio_espectral < 1:
         print("El método SOR CONVERGERÁ.")
     else:
         print("El método SOR NO CONVERGERÁ.")
         return [], radio_espectral
-
-    x_0 = np.zeros_like(b)  # x_0, vector de zeros del tamaño de b
-    #x_0 = [1, 1, 1]
 
     tabla = []
     error = 100

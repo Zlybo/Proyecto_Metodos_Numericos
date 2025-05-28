@@ -206,7 +206,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Metodos
-            const biseccion = document.getElementById('biseccion')
+            const biseccion = document.getElementById('biseccion');
             const regla_falsa = document.getElementById('regla_falsa');
             const punto_fijo = document.getElementById('punto_fijo');
             const newton = document.getElementById('newton')
@@ -227,12 +227,12 @@
 
             // Consideraciones
             const consideracionesPorMetodo = {
-                biseccion: 'El método de bisección solo converge si la raíz está dentro del intervalo [a, b] y f(a)*f(b) < 0.',
-                regla_falsa: 'La regla falsa también requiere f(a)*f(b) < 0 y puede converger más rápido que bisección, pero no siempre divide el intervalo a la mitad.',
-                punto_fijo: 'La función g(x) debe cumplir con condiciones de convergencia. No cualquier g(x) funciona.',
-                newton: 'Newton-Raphson requiere que f(x) sea derivable. El valor inicial debe estar cerca de la raíz.',
-                secante: 'La secante no requiere derivadas, pero necesita dos valores iniciales. Puede fallar si f(x) no es suave.',
-                raices_multiples: 'El método para raíces múltiples requiere calcular la derivada y la derivada segunda. Úsalo solo si sabes que hay raíces repetidas.'
+                biseccion: 'El método de bisección solo converge si la raíz está dentro del intervalo [a, b] y f(a)*f(b) < 0',
+                regla_falsa: 'La regla falsa también requiere f(a)*f(b) < 0 y puede converger más rápido que bisección, pero no siempre divide el intervalo a la mitad',
+                punto_fijo: "El método requiere transformar f(x) en g(x) y que |g'(x)| sea < 1. La mala elección de g(x) puede hacer que no converja",
+                newton: "El método de Newton-Raphson requiere que f(x) sea derivable en el intervalo. Puede puede no converger si f'(x) ≈ 0 o si el valor inicial está demasiado lejos",
+                secante: 'La secante no requiere derivadas, pero necesita dos valores iniciales. Puede fallar si f(x) no es suave',
+                raices_multiples: "El método de raíces múltiples se usa cuando se sospecha que una raíz tiene multiplicidad mayor a 1. Requiere f(x), f'(x) y f''(x). Mejora la convergencia en estos casos, pero es más costoso computacionalmente"
             };
 
             // Funciones:

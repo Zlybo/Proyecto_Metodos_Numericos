@@ -25,7 +25,7 @@
 
         <!-- Descripción -->
         <div class="my-8">
-            <h2 class="text-3xl font-bold mb-2">Capítulo 1: Métodos de Búsqueda de Raíces</h2>
+            <h2 class="text-3xl font-bold mb-2">Capítulo 2: Solución de sistemas lineales</h2>
             <p>Encuentra raíces de ecuaciones no lineales usando diferentes métodos numéricos.</p>
         </div>
 
@@ -53,6 +53,18 @@
         <div class="bg-white rounded-lg p-6 mb-6 text-gray-800">
 
             <h3 class="text-xl font-semibold mb-4">Datos de Entrada</h3>
+            <div class="mb-4">
+                <label for="seleccion_dimension" class="font-medium mb-2">Seleccionar dimensión</label>
+                <select id="seleccion_dimension" class="border border-blue-700 rounded w-full p-2 mb-2">
+                    <option value="">-- Seleccionar tamaño --</option>
+                    <option value="2">2 x 2</option>
+                    <option value="3">3 x 3</option>
+                    <option value="4">4 x 4</option>
+                    <option value="5">5 x 5</option>
+                    <option value="6">6 x 6</option>
+                    <option value="7">7 x 7</option>
+                </select>
+            </div>
             <h3 class="text-xl font-semibold mb-4">Forma: Ax = b</h3>
             <div class="flex flex-1">
                 <div class="mb-4">
@@ -66,8 +78,8 @@
                 </div>
 
                 <div class="ml-6 mb-4">
-                    <label for="vector_B" class="font-medium mb-2">x_0 (opcional)</label>
-                    <math-field id="vector_B" class="border border-blue-700 rounded w-[150px] h-[150px]"></math-field>
+                    <label for="vector_inicial" class="font-medium mb-2">x_0 (opcional)</label>
+                    <math-field id="vector_inicial" class="border border-blue-700 rounded w-[150px] h-[150px]"></math-field>
                 </div>
             </div>
 
@@ -86,6 +98,13 @@
                 </div>
             </div>
 
+            <div id="menu_relajacion" class="hidden">
+                <label for="relajacion" class="font-medium">Valor de Relajación (w)</label>
+                <input type="number" id="relajacion"
+                    class="w-full rounded-lg border border-blue-700 p-2.5" step="any" value="1">
+                <h3>Valor que mejora la convergencia del metodo SOR, debe estar entre: 0 y 2, 
+                    sub-relajación: 0 < w < 1 , sobre-relajación: 1 < w < 2</h3>
+            </div>
 
             <!-- Botones -->
             <div class="flex gap-4 mt-6 text-white font-medium">
@@ -104,6 +123,21 @@
             </div>
 
             <div id="tablaResultados"></div>
+            
+            <!-- Ingreso de datos para el informe -->
+            <div id="menu_informe" class="my-6 hidden">
+                <h2 class="text-lg font-semibold mt-4">Por favor digite los datos faltantes</h2>
+                <label for="relajacion_informe" class="font-medium">Valor de Relajación (w)</label>
+                <input type="number" id="relajacion_informe"
+                    class="w-full rounded-lg border border-blue-700 p-2.5" step="any" value="1">
+                <h3>Valor que mejora la convergencia del metodo SOR, debe estar entre: 0 y 2, 
+                    sub-relajación: 0 < w < 1 , sobre-relajación: 1 < w < 2</h3>
+                <button id="boton_generar_informe"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-6 rounded-lg transition-colors duration-200">
+                    Generar Informe
+                </button>
+                <div id="tabla_informe"></div>
+            </div>
 
         </div>
 
@@ -115,7 +149,7 @@
         document.addEventListener('DOMContentLoaded', function () {
 
             const get_tabla = (tabla) => {
-                if (!tabla.length) return '<p>No hay datos para mostrar</p>';
+                if (!tabla.length) return '<p>El método no convergerá</p>';
 
                 // Número dinámico de x
                 const cantidadX = tabla[0].x_n.length;
@@ -156,14 +190,21 @@
 
                 return html;
             };
+            const jacobi = document.getElementById('jacobi');
+            const gauss_seidel = document.getElementById('gauss_seidel');
+            const sor = document.getElementById('sor');
+
+            const menu_relajacion = document.getElementById('menu_relajacion')
+            const menu_informe = document.getElementById('menu_informe');
+
 
             const tablaDiv = document.getElementById('tablaResultados');
 
             // Consideraciones
             const consideracionesPorMetodo = {
-                jacobi: 'El método de bisección solo converge si la raíz está dentro del intervalo [a, b] y f(a)*f(b) < 0.',
-                gauss_seidel: 'La regla falsa también requiere f(a)*f(b) < 0 y puede converger más rápido que bisección, pero no siempre divide el intervalo a la mitad.',
-                sor: 'La función g(x) debe cumplir con condiciones de convergencia. No cualquier g(x) funciona.',
+                jacobi: 'El método de Jacobi requiere que la matriz T tenga un radio espectral menor a 1 para garantizar convergencia..',
+                gauss_seidel: 'Gauss-Seidel suele converger más rápido que Jacobi. También requiere que la Matriz T tenga un radio espectral menor a 1',
+                sor: 'El método SOR (metodo de relajación) mejora Gauss-Seidel con un parámetro ω (omega). Converge más rápido si se elige bien ω, pero puede diverger si ω no está entre 0 y 2 o si la Matriz T tiene un radio espectral mayor a 1'
             };
 
             // Funciones:
@@ -179,8 +220,11 @@
             //  Respuestas de Botones
             document.getElementById('boton_limpiar').addEventListener('click', () => {
                 tablaDiv.classList.add('hidden');
-                grafica.classList.add('hidden');
                 menu_informe.classList.add('hidden');
+            });
+
+            document.getElementById('boton_informe').addEventListener('click', () => {
+                menu_informe.classList.remove('hidden');
             });
 
             document.getElementById('boton_calcular').addEventListener('click', async () => {
@@ -188,54 +232,145 @@
 
                 const matriz_A = document.getElementById('matriz_A').value;
                 const vector_B = document.getElementById('vector_B').value;
+                const vector_inicial = document.getElementById('vector_inicial').value;
                 const tolerancia = document.getElementById('tolerancia').value;
                 const max_iter = document.getElementById('iteraciones_maximas').value;
 
                 const metodo = document.querySelector('input[name="method"]:checked').id;
                 if (metodo === 'jacobi'){
                     tablaDiv.innerHTML = `<h3 class="font-bold text-lg mt-6">Metodo Jacobi</h3>`;
-                    const data = await get_data('/api/metodos_capitulo_2/', { metodo, matriz_A, vector_B, tolerancia, max_iter });
+                    const data = await get_data('/api/metodos_capitulo_2/', { metodo, matriz_A, vector_B, vector_inicial, tolerancia, max_iter });
                     tablaDiv.innerHTML += `<h3 class="font-semibold text-sm mt-6">Radio Espectral: ${data.radio}</h3>`;
                     tablaDiv.innerHTML += get_tabla(data.tabla);     
                 }
                 else if (metodo === 'gauss_seidel'){
                     tablaDiv.innerHTML = `<h3 class="font-bold text-lg mt-6">Metodo Gauss-Seidel</h3>`;
-                    const data = await get_data('/api/metodos_capitulo_2/', { metodo, matriz_A, vector_B, tolerancia, max_iter });
+                    const data = await get_data('/api/metodos_capitulo_2/', { metodo, matriz_A, vector_B, vector_inicial, tolerancia, max_iter });
                     tablaDiv.innerHTML += `<h3 class="font-semibold text-sm mt-6">Radio Espectral: ${data.radio}</h3>`;
                     tablaDiv.innerHTML += get_tabla(data.tabla);     
                 }
                 else if (metodo === 'sor'){
+                    const relajacion = document.getElementById('relajacion').value;
                     tablaDiv.innerHTML = `<h3 class="font-bold text-lg mt-6">Metodo SOR</h3>`;
-                    const data = await get_data('/api/metodos_capitulo_2/', { metodo, matriz_A, vector_B, tolerancia, max_iter });
+                    const data = await get_data('/api/metodos_capitulo_2/', { metodo, matriz_A, vector_B, vector_inicial, relajacion, tolerancia, max_iter });
                     tablaDiv.innerHTML += `<h3 class="font-semibold text-sm mt-6">Radio Espectral: ${data.radio}</h3>`;
                     tablaDiv.innerHTML += get_tabla(data.tabla);     
                 }
+            });
+            
+            document.getElementById('boton_generar_informe').addEventListener('click', async () => {
+                const get_tabla = (tabla) => {
+                    if (!tabla.length) return '<p>El método no convergerá</p>';
+
+                    // Número dinámico de x
+                    const cantidadX = tabla[0].x_n.length;
+
+                    // Generar etiquetas dinámicas: x1, x2, ..., xN
+                    const etiquetasX = [];
+                    for (let i = 1; i <= cantidadX; i++) {
+                        etiquetasX.push(`x${i}`);
+                    }
+
+                    // Encabezado con iter, las etiquetas dinámicas, y error
+                    let html = `<table class="w-full border border-blue-700"> 
+                                <thead class="text-left border border-blue-700">
+                                    <tr>
+                                    <th>Iter</th>`;
+
+                    etiquetasX.forEach(etiqueta => {
+                        html += `<th>${etiqueta}</th>`;
+                    });
+
+                    html += `<th>Error</th>
+                            </tr>
+                            </thead>
+                            <tbody>`;
+
+                    // Cuerpo
+                    tabla.forEach(fila => {
+                        html += `<tr><td>${fila.iter.toFixed(6)}</td>`;
+
+                        fila.x_n.forEach(x => {
+                            html += `<td>${x[0].toFixed(6)}</td>`;
+                        });
+
+                        html += `<td>${fila.error.toFixed(6)}</td>`;
+                        html += `</tr>`;
+                    });
+                    html += '</tbody></table>';
+
+                    return html;
+                };
+
+                const matriz_A = document.getElementById('matriz_A').value;
+                const vector_B = document.getElementById('vector_B').value;
+                const vector_inicial = document.getElementById('vector_inicial').value;
+                const relajacion = document.getElementById('relajacion').value;
+                const tolerancia = document.getElementById('tolerancia').value;
+                const max_iter = document.getElementById('iteraciones_maximas').value;
+
+                const tabla_informe = document.getElementById('tabla_informe');
+                
+                const data = await get_data('/api/informe_capitulo_2/', { matriz_A, vector_B, vector_inicial, relajacion, tolerancia, max_iter })
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                };
+
+                tabla_informe.innerHTML = "" // Borramos lo anterior
+                tabla_informe.innerHTML += `<h3 class="font-bold text-lg mt-6">Jacobi</h3>`
+                tabla_informe.innerHTML += `<h3 class="font-semibold text-sm mt-6">Radio Espectral: ${data.radio[0]}</h3>`;
+                tabla_informe.innerHTML += get_tabla(data.tabla[0])
+
+                tabla_informe.innerHTML += `<h3 class="font-bold text-lg mt-6">Gauss-Seidel</h3>`
+                tabla_informe.innerHTML += `<h3 class="font-semibold text-sm mt-6">Radio Espectral: ${data.radio[1]}</h3>`;
+                tabla_informe.innerHTML += get_tabla(data.tabla[1])
+
+                tabla_informe.innerHTML += `<h3 class="font-bold text-lg mt-6">SOR</h3>`
+                tabla_informe.innerHTML += `<h3 class="font-semibold text-sm mt-6">Radio Espectral: ${data.radio[2]}</h3>`;
+                tabla_informe.innerHTML += get_tabla(data.tabla[2])
+                
+                tabla_informe.innerHTML += `<h3 class="font-bold text-lg mt-6">
+                    El mejor fue: ${data.mejor} con un error de: ${data.valor}
+                    </h3>`
 
             });
 
+            // Metodo para controlar el selector de matrices
+            const selectDimension = document.getElementById('seleccion_dimension');
+            const matrizA = document.getElementById('matriz_A');
+            const vectorB = document.getElementById('vector_B');
+            const vectorX0 = document.getElementById('vector_inicial');
+            // Función para generar matriz de ceros n x n
+            function generarMatrizCeros(n) {
+                let filas = [];
+                for (let i = 0; i < n; i++) {
+                    filas.push(Array(n).fill('0').join(' & '));
+                }
+                return `\\begin{pmatrix}${filas.join('\\\\')}\\end{pmatrix}`;
+            };
+            // Función para generar vector columna de ceros n x 1
+            function generarVectorCeros(n) {
+                let filas = Array(n).fill('0').join('\\\\');
+                return `\\begin{pmatrix}${filas}\\end{pmatrix}`;
+            };
+            selectDimension.addEventListener('change', () => {
+                const n = parseInt(selectDimension.value);
+                if (n >= 2 && n <= 7) {
+                    matrizA.value = generarMatrizCeros(n);
+                    vectorB.value = generarVectorCeros(n);
+                    vectorX0.value = generarVectorCeros(n);
+                }
+            });
 
             function actualizarMenus() {
                 // Oculta todo
-                menu_intervalos.classList.add('hidden');
-                menu_punto_fijo.classList.add('hidden');
-                menu_newton_raices.classList.add('hidden');
-                menu_secante.classList.add('hidden');
+                menu_relajacion.classList.add('hidden');
 
                 // Muestra según el método
-                if (biseccion.checked || regla_falsa.checked) {
-                    menu_intervalos.classList.remove('hidden');
-                }
-
-                if (punto_fijo.checked) {
-                    menu_punto_fijo.classList.remove('hidden')
-                }
-
-                if (newton.checked || raices_multiples.checked) {
-                    menu_newton_raices.classList.remove('hidden')
-                }
-                if (secante.checked) {
-                    menu_secante.classList.remove('hidden')
-                }
+                if (sor.checked) {
+                    menu_relajacion.classList.remove('hidden');
+                };
             }
 
             // Funcion que cambia las consideraciones
@@ -250,7 +385,7 @@
             }
 
             // Detectar cambios
-            const metodos = [biseccion, regla_falsa, punto_fijo, newton, secante, raices_multiples];
+            const metodos = [jacobi, gauss_seidel, sor];
 
             metodos.forEach(metodo => {
                 metodo.addEventListener('change', () => {

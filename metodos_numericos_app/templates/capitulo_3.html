@@ -103,6 +103,7 @@
             const spline_cubico = document.getElementById('spline_cubico');
 
             const tablaDiv = document.getElementById('tablaResultados');
+            const tabla_informe = document.getElementById('tabla_informe');
             const grafica = document.getElementById('grafica');
 
 
@@ -140,7 +141,7 @@
             document.getElementById('boton_limpiar').addEventListener('click', () => {
                 tablaDiv.classList.add('hidden');
                 grafica.classList.add('hidden');
-                //menu_informe.classList.add('hidden');
+                tabla_informe.classList.add('hidden');
             });
 
             document.getElementById('boton_calcular').addEventListener('click', async () => {
@@ -217,8 +218,6 @@
             document.getElementById('boton_informe').addEventListener('click', async () => {
                 const punto_x = document.getElementById('punto_x').value;
                 const punto_y = document.getElementById('punto_y').value;
-
-                const tabla_informe = document.getElementById('tabla_informe');
                 
                 const data = await get_data('/api/informe_capitulo_3/', { punto_x, punto_y })
                 if (data.error) {
@@ -229,6 +228,8 @@
                 tabla_informe.innerHTML = "" // Borramos lo anterior
                 tabla_informe.innerHTML += `<h3 class="font-bold text-lg mt-6">Vandermonde</h3>`
                 tabla_informe.innerHTML += `<math-field readonly>p(x) = ${data.polinomios[0]} </math-field>`;
+                //tabla_informe.innerHTML =+ `<img src="" />`
+
 
                 tabla_informe.innerHTML += `<h3 class="font-bold text-lg mt-6">Metodo De Newton Interpolante</h3>`;
                 tabla_informe.innerHTML += `<math-field readonly>p(x) = ${data.polinomios[1]} </math-field>`;

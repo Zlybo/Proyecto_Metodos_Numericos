@@ -1,10 +1,5 @@
 import numpy as np
 
-def imprimir_spline_cubico(splines):
-    for i, ((x0, x1), (a, b, c, d)) in enumerate(splines):
-        print(f"Tramo {i+1}: x ∈ [{x0}, {x1}]")
-        print(f"S_{i}(x) = {a:.4f} + {b:.4f}(x - {x0}) + {c:.4f}(x - {x0})² + {d:.4f}(x - {x0})³\n")
-
 
 def spline_cubico(x_str, y_str):
     x = np.array(x_str.split(','), dtype=float)
@@ -40,12 +35,50 @@ def spline_cubico(x_str, y_str):
         intervalo = (x[i], x[i + 1])
         splines.append((intervalo, coef))
 
-    return splines
+    polinomios = []
+    for i, ((x0, x1), (a, b, c, d)) in enumerate(splines):
+        polinomio_str = f"Tramo {i + 1}: x ∈ [{x0}, {x1}]"
+        polinomio_str += f"S_{i}(x) = {a:.4f} + {b:.4f}(x - {x0}) + {c:.4f}(x - {x0})**2 + {d:.4f}(x - {x0})**3"
+        polinomios.append(polinomio_str)
+
+    return splines, polinomios
+
+
+import matplotlib.pyplot as plt
+
+
+def graficar_spline_cubico(tramos, puntos_x, puntos_y, titulo="Spline Cúbico"):
+    puntos_x = np.array(puntos_x.split(','), dtype=float)
+    puntos_y = np.array(puntos_y.split(','), dtype=float)
+
+    x_plot = []
+    y_plot = []
+
+    for (x0, x1), (a, b, c, d) in tramos:
+        x_vals = np.linspace(x0, x1, 100)
+        x_shift = x_vals - x0
+        y_vals = a + b * x_shift + c * x_shift ** 2 + d * x_shift ** 3
+
+        x_plot.extend(x_vals)
+        y_plot.extend(y_vals)
+
+    # Graficar
+    plt.plot(x_plot, y_plot, label="Spline cúbico", color="blue")
+    plt.scatter(puntos_x, puntos_y, color='red', zorder=5, label="Puntos originales")
+
+    plt.title(titulo)
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.grid(True)
+    plt.legend()
+    plt.show()
 
 
 x_str = "1.5, 8.5, 22, 35"
 y_str = "0, 9, 28, 26"
 
-tramos = spline_cubico(x_str, y_str)
+tramos, polinomios = spline_cubico(x_str, y_str)
+print(tramos)
+print(polinomios)
 
-imprimir_spline_cubico(tramos)
+graficar_spline_cubico(tramos, x_str, y_str)

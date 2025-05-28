@@ -121,3 +121,55 @@ def spline_lineal(x_str, y_str):
         polinomios.append(polinomios_str)
 
     return tramos, polinomios
+
+
+def imprimir_spline_cubico(splines):
+    polinomios = []
+    for i, ((x0, x1), (a, b, c, d)) in enumerate(splines):
+        polinomio_str = f"Tramo {i + 1}: x ∈ [{x0}, {x1}]"
+        polinomio_str += f"S_{i}(x) = {a:.4f} + {b:.4f}(x - {x0}) + {c:.4f}(x - {x0})**2 + {d:.4f}(x - {x0})**3"
+        polinomios.append(polinomio_str)
+    return polinomios
+
+
+def spline_cubico(x_str, y_str):
+    x = np.array(x_str.split(','), dtype=float)
+    y = np.array(y_str.split(','), dtype=float)
+
+    n = len(x)
+    h = np.diff(x)
+    b = np.diff(y) / h
+
+    # Construimos el sistema tridiagonal
+    A = np.zeros((n, n))
+    rhs = np.zeros(n)
+
+    A[0, 0] = 1
+    A[-1, -1] = 1
+
+    for i in range(1, n - 1):
+        A[i, i - 1] = h[i - 1]
+        A[i, i] = 2 * (h[i - 1] + h[i])
+        A[i, i + 1] = h[i]
+        rhs[i] = 3 * (b[i] - b[i - 1])
+
+    c = np.linalg.solve(A, rhs)
+
+    a = y[:-1]
+    d = (c[1:] - c[:-1]) / (3 * h)
+    b = (y[1:] - y[:-1]) / h - h * (2 * c[:-1] + c[1:]) / 3
+
+    tramos = []
+    for i in range(n - 1):
+        # Cada spline: S(x) = a + b*(x - x_i) + c*(x - x_i)^2 + d*(x - x_i)^3
+        coef = (a[i], b[i], c[i], d[i])
+        intervalo = (x[i], x[i + 1])
+        tramos.append((intervalo, coef))
+
+    polinomios = []
+    for i, ((x0, x1), (a, b, c, d)) in enumerate(tramos):
+        polinomio_str = f"Tramo {i + 1}: x ∈ [{x0}, {x1}]"
+        polinomio_str += f"S_{i}(x) = {a:.4f} + {b:.4f}(x - {x0}) + {c:.4f}(x - {x0})**2 + {d:.4f}(x - {x0})**3"
+        polinomios.append(polinomio_str)
+
+    return tramos, polinomios

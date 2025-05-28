@@ -5,10 +5,10 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .metodos.Capitulo_1 import biseccion, regla_falsa, punto_fijo, newton, secante, raices_multiples
 from .metodos.Graficas import graficar_intervalos, graficar_punto_fijo, graficar_newton, graficar_secante, \
-    graficar_raices_multiples, graficar_polinomio, graficar_tramos_lineal
+    graficar_raices_multiples, graficar_polinomio, graficar_tramos_lineal, graficar_spline_cubico
 
 from .metodos.Capitulo_2 import jacobi, gauss_seidel, sor
-from .metodos.Capitulo_3 import vandermonde, newton_interpolante, lagrange, spline_lineal
+from .metodos.Capitulo_3 import vandermonde, newton_interpolante, lagrange, spline_lineal, spline_cubico
 
 
 def index(request):
@@ -203,42 +203,26 @@ def metodos_capitulo_3(request):
         tramos, polinomios = spline_lineal(x_str, y_str)
         return JsonResponse({'tramos': tramos, 'polinomios': polinomios})
 
+    elif metodo == "spline_cubico":
+        tramos, polinomios = spline_cubico(x_str, y_str)
+        return JsonResponse({'tramos': tramos, 'polinomios': polinomios})
+
     return None
 
 
 @csrf_exempt
 def informe_capitulo_3(request):
-    matriz = request.POST.get('matriz_A')
-    vector = request.POST.get('vector_B')
-    x_0 = request.POST.get('vector_inicial')
-    relajacion = float(request.POST.get('relajacion'))
-    tolerancia = float(request.POST.get('tolerancia'))
-    max_iter = int(request.POST.get('max_iter'))
+    x_str = request.POST.get('punto_x')
+    y_str = request.POST.get('punto_y')
 
-    tabla1, radio_espectral1 = jacobi(matriz, vector, x_0, tolerancia, max_iter)
-    tabla2, radio_espectral2 = gauss_seidel(matriz, vector, x_0, tolerancia, max_iter)
-    tabla3, radio_espectral3 = sor(matriz, vector, x_0, relajacion, tolerancia, max_iter)
+    polinomio1 = vandermonde(x_str, y_str)
+    polinomio2, expandido2 = newton_interpolante(x_str, y_str)
+    polinomio3, expandido3 = lagrange(x_str, y_str)
+    tramos4, polinomios4 = spline_lineal(x_str, y_str)
+    tramos5, polinomios5 = spline_cubico(x_str, y_str)
 
-    tablas = [tabla1, tabla2, tabla3]
-    radios = [radio_espectral1, radio_espectral2, radio_espectral3]
-
-    # Buscamos el mejor
-    metodos = ["Jacobi", "Gauss-Seidel", "SOR"]
-    errores = []
-
-    for tabla_indice in range(len(tablas)):
-        if len(tablas[tabla_indice]) > 0:
-            ultimo = tablas[tabla_indice][-1]
-            errores.append({tabla_indice: ultimo["error"]})
-
-    if len(errores) > 0:
-        menor = min(errores, key=lambda diccionario: list(diccionario.values()))
-        menor_indice = list(menor.keys())[0]
-        return JsonResponse(
-            {'tabla': tablas, 'radio': radios, 'mejor': metodos[menor_indice], 'valor': menor[menor_indice]})
-    else:
-        return JsonResponse({'tabla': tablas, 'radio': radios, 'mejor': 'Ninguno', 'valor': 100})
-
+    lista_polinomios = [polinomio1, expandido2, expandido3, polinomios4, polinomios5]
+    return JsonResponse({'polinomios': lista_polinomios})
 
 @csrf_exempt
 def graficar_view(request):
@@ -289,9 +273,14 @@ def graficar_view_3(request):
         if metodo == "vandermonde" or metodo == "newton_interpolante" or metodo == "lagrange":
             imagen = graficar_polinomio(polinomio, x_str, y_str, titulo=metodo)
             return HttpResponse(imagen, content_type='image/png')
-        if metodo == "spline_lineal":
+        elif metodo == "spline_lineal":
             tramos = request.POST.get('tramos')
             imagen = graficar_tramos_lineal(tramos, x_str, titulo=metodo)
+            return HttpResponse(imagen, content_type='image/png')
+        elif metodo == "spline_cubico":
+            print("if")
+            tramos = request.POST.get('tramos')
+            imagen = graficar_spline_cubico(tramos, x_str, y_str, titulo=metodo)
             return HttpResponse(imagen, content_type='image/png')
 
     except Exception as e:

@@ -259,3 +259,42 @@ def graficar_tramos_lineal(tramos, x_vals, titulo=""):
     plt.close()
     buffer.seek(0)
     return buffer.getvalue()  # bytes listos para enviar como imagen
+
+def graficar_spline_cubico(tramos, puntos_x, puntos_y, titulo=""):
+    puntos_x = np.array(puntos_x.split(','), dtype=float)
+    puntos_y = np.array(puntos_y.split(','), dtype=float)
+
+    # Agrupar cada 6 elementos: x0, x1, a, b, c, d
+    numeros = list(map(float, tramos.split(',')))
+    tramos = [tuple(numeros[i:i + 6]) for i in range(0, len(numeros), 6)]
+
+    print("puntos_x:", puntos_x)
+    print("puntos_y:", puntos_y)
+    print("tramos:", tramos)
+
+    x_plot = []
+    y_plot = []
+
+    for x0, x1, a, b, c, d in tramos:
+        x_vals = np.linspace(x0, x1, 100)
+        x_shift = x_vals - x0
+        y_vals = a + b * x_shift + c * x_shift ** 2 + d * x_shift ** 3
+
+        x_plot.extend(x_vals)
+        y_plot.extend(y_vals)
+
+    # Graficar
+    plt.plot(x_plot, y_plot, label="Spline cúbico", color="blue")
+    plt.scatter(puntos_x, puntos_y, color='red', zorder=5, label="Puntos originales")
+
+    plt.title(titulo)
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.grid(True)
+    plt.legend()
+
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png')
+    plt.close()
+    buffer.seek(0)
+    return buffer.getvalue()

@@ -86,6 +86,7 @@
 
             <img class="hidden" id="grafica" alt="Gráfico generado" />
 
+            <div id="tabla_informe"></div>
 
         </div>
         
@@ -140,10 +141,6 @@
                 tablaDiv.classList.add('hidden');
                 grafica.classList.add('hidden');
                 //menu_informe.classList.add('hidden');
-            });
-
-            document.getElementById('boton_informe').addEventListener('click', () => {
-                menu_informe.classList.remove('hidden');
             });
 
             document.getElementById('boton_calcular').addEventListener('click', async () => {
@@ -202,7 +199,50 @@
                     const url = URL.createObjectURL(blob);
                     grafica.src = url
                 }
+                else if (metodo === 'spline_cubico'){
+                    tablaDiv.innerHTML = `<h3 class="font-bold text-lg mt-6">Metodo De Spline Lineal</h3>`;
+                    const data = await get_data('/api/metodos_capitulo_3/', { metodo, punto_x, punto_y });   
+                    const polinomios = data.polinomios
+                    tablaDiv.innerHTML += `${polinomios.map(poli => `<h3 class="font-semibold text-sm mt-6">${poli}</h3>`).join('')}`;
+
+                    // ----------------- Graficamos -------------------------
+                    const tramos = data.tramos;
+                    const blob = await get_grafica({ metodo, tramos, punto_x, punto_y })
+                    const url = URL.createObjectURL(blob);
+                    grafica.src = url
+                }
                 
+            });
+
+            document.getElementById('boton_informe').addEventListener('click', async () => {
+                const punto_x = document.getElementById('punto_x').value;
+                const punto_y = document.getElementById('punto_y').value;
+
+                const tabla_informe = document.getElementById('tabla_informe');
+                
+                const data = await get_data('/api/informe_capitulo_3/', { punto_x, punto_y })
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                };
+
+                tabla_informe.innerHTML = "" // Borramos lo anterior
+                tabla_informe.innerHTML += `<h3 class="font-bold text-lg mt-6">Vandermonde</h3>`
+                tabla_informe.innerHTML += `<math-field readonly>p(x) = ${data.polinomios[0]} </math-field>`;
+
+                tabla_informe.innerHTML += `<h3 class="font-bold text-lg mt-6">Metodo De Newton Interpolante</h3>`;
+                tabla_informe.innerHTML += `<math-field readonly>p(x) = ${data.polinomios[1]} </math-field>`;
+
+                tabla_informe.innerHTML += `<h3 class="font-bold text-lg mt-6">Metodo De Lagrange</h3>`;
+                tabla_informe.innerHTML += `<math-field readonly>p(x) = ${data.polinomios[2]} </math-field>`;
+
+                tabla_informe.innerHTML += `<h3 class="font-bold text-lg mt-6">Metodo De Spline Lineal</h3>`;
+                const polinomios1 = data.polinomios[3]
+                tabla_informe.innerHTML += `${polinomios1.map(poli => `<h3 class="font-semibold text-sm mt-6">${poli}</h3>`).join('')}`;
+
+                tabla_informe.innerHTML += `<h3 class="font-bold text-lg mt-6">Metodo De Spline Lineal</h3>`;
+                const polinomios2 = data.polinomios[4]
+                tabla_informe.innerHTML += `${polinomios2.map(poli => `<h3 class="font-semibold text-sm mt-6">${poli}</h3>`).join('')}`;
             });
 
             function actualizarMenus() {
